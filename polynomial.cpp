@@ -1,5 +1,12 @@
 #include "polynomial.h"
 
+int factorial(const int a) {
+	int result = 1;
+	for (int i = 1; i <= a; i++)
+		result = result * i;
+	return a != 0 ? result : 1;
+}
+
 Polynomial::Polynomial(const int deg, const double coeffic[]) {
 	locked = false;
 	degree = deg;
@@ -86,6 +93,10 @@ Polynomial::Polynomial(Polynomial&& p) {
 	degree = p.degree;
 	coefficients = p.coefficients;
 	p.coefficients = nullptr;
+	p.degree = -1;
+	p.locked = true;
+	p.limits[0] = 0;
+	p.limits[1] = 0;
 }
 
 Polynomial& Polynomial::operator=(const Polynomial& p) {
@@ -109,11 +120,15 @@ Polynomial& Polynomial::operator=(Polynomial&& p) {
 	degree = p.degree;
 	coefficients = p.coefficients;
 	p.coefficients = nullptr;
+	p.degree = -1;
+	p.locked = true;
+	p.limits[0] = 0;
+	p.limits[1] = 0;
 
 	return *this;
 }
 
-double Polynomial::value(const double x) {
+double Polynomial::value(const double x) const {
 	if (locked && (x > limits[1] || x < limits[0])) {
 		std::cout << "ten wielomian nie pozwala na obliczenie wartosci poza zakresem!";
 		return NULL;
@@ -127,7 +142,7 @@ double Polynomial::value(const double x) {
 	return result;
 }
 
-Polynomial Polynomial::operator*(const Polynomial& p) {
+Polynomial Polynomial::operator*(const Polynomial& p) const {
 	Polynomial result(this->degree + p.degree);
 
 	for (int i = 0; i <= this->degree + p.degree; i++)
@@ -140,7 +155,7 @@ Polynomial Polynomial::operator*(const Polynomial& p) {
 	return result;
 }
 
-Polynomial Polynomial::operator/(const double a) {
+Polynomial Polynomial::operator/(const double a) const {
 	Polynomial result(*this);
 	result.locked = false;
 
@@ -160,7 +175,7 @@ Polynomial& Polynomial::operator/=(const double a) {
 	return *this;
 }
 
-Polynomial Polynomial::operator-(const Polynomial& p) {
+Polynomial Polynomial::operator-(const Polynomial& p) const {
 	if (this->degree > p.degree) {
 		Polynomial result(*this);
 		for (int i = 0; i <= p.degree; i++)
@@ -177,9 +192,11 @@ Polynomial Polynomial::operator-(const Polynomial& p) {
 
 Polynomial& Polynomial::operator-=(const Polynomial& p) {
 	*this = *this - p;
+
+	return *this;
 }
 
-Polynomial Polynomial::operator-(const double a) {
+Polynomial Polynomial::operator-(const double a) const {
 	Polynomial result(*this);
 
 	result.coefficients[result.degree] -= a;
@@ -189,9 +206,11 @@ Polynomial Polynomial::operator-(const double a) {
 
 Polynomial& Polynomial::operator-=(const double a) {
 	coefficients[degree] -= a;
+
+	return *this;
 }
 
-Polynomial Polynomial::operator*(const double a) {
+Polynomial Polynomial::operator*(const double a) const {
 	Polynomial result(*this);
 
 	for (int i = 0; i <= result.degree; i++)
@@ -203,9 +222,11 @@ Polynomial Polynomial::operator*(const double a) {
 Polynomial& Polynomial::operator*=(const double a) {
 	for (int i = 0; i < -this->degree; i++)
 		this->coefficients[i] *= a;
+
+	return *this;
 }
 
-Polynomial Polynomial::operator+(const Polynomial& p) {
+Polynomial Polynomial::operator+(const Polynomial& p) const {
 	Polynomial result;
 
 	if (this->degree > p.degree) {
@@ -229,7 +250,7 @@ Polynomial Polynomial::operator+(const Polynomial& p) {
 	return result;
 }
 
-Polynomial Polynomial::operator+(const double a) {
+Polynomial Polynomial::operator+(const double a) const {
 	Polynomial result(*this);
 
 	result.coefficients[degree] += a;
@@ -247,7 +268,7 @@ Polynomial& Polynomial::operator+=(const Polynomial& p) {
 	return *this;
 }
 
-std::vector<double> Polynomial::derivatives(const double x) {
+std::vector<double> Polynomial::derivatives(const double x) const {
 	if (locked)
 		return std::vector<double>();
 
@@ -276,14 +297,7 @@ std::vector<double> Polynomial::derivatives(const double x) {
 	return result;
 }
 
-int factorial(const int a) {
-	int result = 1;
-	for (int i = 1; i <= a; i++)
-		result = result * i;
-	return a != 0 ? result : 1;
-}
-
-void Polynomial::show() {
+void Polynomial::show() const{
 	for (int i = 0; i <= degree; i++) {
 		std::cout << coefficients[i] << "\t";
 	}
@@ -292,8 +306,15 @@ void Polynomial::show() {
 
 void Polynomial::setLim(double a, double b) {
 	locked = true;
-	limits[0] = a > b ? b : a;
-	limits[1] = a > b ? a : b;
+
+	if (a > b) {
+		limits[0] = b;
+		limits[1] = a;
+	}
+	else {
+		limits[0] = a;
+		limits[1] = b;
+	}
 }
 
 Polynomial operator+(const double a, const Polynomial& p) {
